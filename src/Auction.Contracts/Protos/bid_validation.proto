@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option csharp_namespace = "Auction.Contracts.Protos";
+
+package auction.validation.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Dịch vụ độc lập kiểm tra tính hợp lệ của một lượt trả giá.
+// Service là stateless: Auction.API gửi kèm "ảnh chụp" (snapshot) trạng thái phiên đấu giá.
+service BidValidator {
+  rpc ValidateBid (ValidateBidRequest) returns (ValidateBidResponse);
+}
+
+// Biểu diễn số decimal chính xác (tránh sai số của double).
+// value = units + nanos / 1_000_000_000
+message DecimalValue {
+  int64 units = 1;
+  sfixed32 nanos = 2;
+}
+
+enum AuctionStatus {
+  AUCTION_STATUS_PENDING = 0;
+  AUCTION_STATUS_ACTIVE = 1;
+  AUCTION_STATUS_ENDED = 2;
+}
+
+message ValidateBidRequest {
+  string auction_id = 1;
+  AuctionStatus status = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  DecimalValue starting_price = 5;
+  DecimalValue current_price = 6;
+  DecimalValue min_step_price = 7;
+  bool has_bids = 8;
+  string current_highest_bidder = 9;
+  string bidder_name = 10;
+  DecimalValue amount = 11;
+}
+
+message ValidateBidResponse {
+  bool is_valid = 1;
+  string error_code = 2;
+  string reason = 3;
+  DecimalValue min_acceptable_amount = 4;
+}
